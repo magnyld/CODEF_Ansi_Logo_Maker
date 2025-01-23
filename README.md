@@ -30,3 +30,6 @@ You can find a PHP version to generate the font list in realtime and a HTML vers
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
+
+## run it on local server
+ php -S 127.0.0.1:8000

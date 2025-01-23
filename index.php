@@ -133,6 +133,12 @@
         a {
             color: rgb(85, 85, 255);
         }
+
+        .row {
+            border: 1px solid white;
+            padding: 15px;
+        }
+
     </style>
     <script>
         var matrix = [];
@@ -159,9 +165,11 @@
         bg.initTile(FONTW, FONTH);
         ft.initTile(FONTW, FONTH);
 
+        var rowContainer;
 
 
-        function LoadTDF(tdf) {
+
+        function LoadTDF(tdf, cb) {
             workvar = new TDFfont();
             var fetch = new XMLHttpRequest();
             fetch.open('GET', tdf);
@@ -188,6 +196,8 @@
                         "<" + "/tr>";
 
                     for (var i = 0; i < workvar.headers.length; i++) {
+
+                        console.log(workvar.headers);
                         lett = "";
                         aze += "<tr>";
                         aze += "<td><button onclick='text_renderer(" + i + ");'>" + workvar.headers[i].fontname + "</button><" + "/td>";
@@ -205,9 +215,31 @@
                         aze += "<" + "/tr>";
                     }
                     aze += "<" + "/table>";
-                    document.getElementById("infos").innerHTML = aze;
-                    text_renderer(0);
-		    dolink(0);
+
+
+                    
+
+
+                    var row = document.createElement("div");
+                    row.className = "row";
+
+                    rowContainer.appendChild(row);
+
+                    var container = document.createElement("div");
+                    container.innerHTML = aze;
+                    
+                    row.appendChild(container);
+                    var canvas_elem = text_renderer(0);
+
+                    row.appendChild(canvas_elem.canvas);
+
+                    var linkContainer = dolink(0);
+
+                    row.appendChild(linkContainer);
+
+
+                    cb();
+
                 }
             };
             fetch.send();
@@ -220,8 +252,26 @@
         }
 
 		function dolink(fnum){
-			document.getElementById("curlink").innerHTML="curl \"https://codef-ansi-logo-maker-api.santo.fr/api.php?text="+encodeURI(document.getElementById("mytext").value)+"&font="+document.getElementById("FONTS").selectedIndex+"&spacing="+document.getElementById("spacing").value+"&spacesize="+document.getElementById("spacesize").value+"&vary="+fnum+"\" > /etc/motd";
-			document.getElementById("phplink").innerHTML="php api.php \""+encodeHTMLEntities(document.getElementById("mytext").value)+"\" "+document.getElementById("FONTS").selectedIndex+" "+document.getElementById("spacing").value+" "+document.getElementById("spacesize").value+" "+fnum+" > /etc/motd";
+
+            var container = document.createElement("div");
+
+            curlink = document.createElement("div");
+            phplink = document.createElement("div");
+            buttonContainer = document.createElement("div");
+
+            container.appendChild(curlink);
+            container.appendChild(phplink);
+            container.appendChild(buttonContainer);
+
+
+            buttonContainer.innerHTML = "<div><button onclick=\"dl_img(this)\">Download Image</button></div> <div><button onclick=\"dl_txt(this)\">Download text file (utf8)</button></div>";
+					
+
+
+			curlink.innerHTML="curl \"http://localhost:8000/api.php?text="+encodeURI(document.getElementById("mytext").value)+"&font="+document.getElementById("FONTS").selectedIndex+"&spacing="+document.getElementById("spacing").value+"&spacesize="+document.getElementById("spacesize").value+"&vary="+fnum+"\" > /etc/motd";
+			phplink.innerHTML="php api.php \""+encodeHTMLEntities(document.getElementById("mytext").value)+"\" "+document.getElementById("FONTS").selectedIndex+" "+document.getElementById("spacing").value+" "+document.getElementById("spacesize").value+" "+fnum+" > /etc/motd";
+
+            return container;
 		}
 
         function file_parser(binString) {
@@ -262,13 +312,21 @@
         }
 
         function text_renderer(num, spsize) {
+
+
+            var mycanvasHidden = new canvas(3200, FONTH * 12);
+        
+
+            mycanvasHidden.contex.imageSmoothingEnabled = false;
+            
+
             for (var i = 0; i < 12; i++) {
                 matrix[i] = [];
                 FTmatrix[i] = [];
                 BGmatrix[i] = [];
             }
             curnum = num;
-            mycanvas.fill("#000000");
+            mycanvasHidden.fill("#000000");
             POSX = 1;
             POSY = 1;
             maxPOSX = 0;
@@ -293,14 +351,14 @@
 
                                     if (char == "\r") {
                                         n--;
-                                        _PRINTCHAR(char);
+                                        _PRINTCHAR(char, mycanvasHidden);
                                     } else if (char == "\0") {
                                         /**/
                                     } else {
                                         col = workvar.data[num][offset + n + 1].charCodeAt(0);
                                         BGCOL = Math.floor(col / 16);
                                         FTCOL = col % 16;
-                                        _PRINTCHAR(char);
+                                        _PRINTCHAR(char, mycanvasHidden);
                                     }
 
                                     n += 2;
@@ -333,7 +391,7 @@
                                     if (char == "\0") {
                                         /**/
                                     } else {
-                                        _PRINTCHAR(char);
+                                        _PRINTCHAR(char, mycanvasHidden);
 
                                     }
                                     n++;
@@ -351,24 +409,29 @@
                     }
                 }
             }
+            /*
             if (document.getElementById("maincanvas") == null) {
                 myfinalcanvas = new canvas(0, 0, "main");
             }
-            document.getElementById("maincanvas").width = (maxPOSX - 1) * FONTW;
-            document.getElementById("maincanvas").height = maxPOSY * FONTH;
-            if (maxPOSX > 0) {
-                document.getElementById("dl").style = "display:inline";
-                document.getElementById("dltxt").style = "display:inline";
-            } else {
-                document.getElementById("dl").style = "display:none";
-                document.getElementById("dltxt").style = "display:none";
-            }
+            */
 
-            mycanvas.draw(myfinalcanvas, 0, 0);
-	    dolink(num);
+            console.log((maxPOSX - 1) * FONTW);
+            console.log((maxPOSY * FONTH));
+
+
+            var mycanvas = new canvas((maxPOSX - 1) * FONTW, maxPOSY * FONTH);
+
+            //mycanvas.width = (maxPOSX - 1) * FONTW;
+            //mycanvas.height = maxPOSY * FONTH;
+
+
+            mycanvasHidden.draw(mycanvas, 0, 0);
+	        var linkContainer = dolink(num);
+
+            return mycanvas;
         }
 
-        function _PRINTCHAR(char) {
+        function _PRINTCHAR(char, mycanvas) {
             matrix[POSY - 1][POSX - 1] = char;
             BGmatrix[POSY - 1][POSX - 1] = BGCOL;
             FTmatrix[POSY - 1][POSX - 1] = FTCOL;
@@ -493,11 +556,16 @@
             };
         }
 
-        function dl_img() {
+        function dl_img(thisPointer) {
+
+            var canvas = thisPointer.parentNode.parentNode.parentNode.parentNode.childNodes[1];
+
+            console.log(thisPointer, canvas);
+
             var link = document.getElementById('link');
             var mydate = new Date();
             link.setAttribute('download', 'CODEF_LOGO_MAKER_' + mydate.getTime() + '.png');
-            link.setAttribute('href', myfinalcanvas.canvas.toDataURL("image/png").replace("image/png", "image/octet-stream"));
+            link.setAttribute('href', canvas.toDataURL("image/png").replace("image/png", "image/octet-stream"));
             link.click();
         }
 
@@ -607,8 +675,8 @@
                             }
                             mystring += " ";
                         } else if (typeof matrix[i][n] === 'undefined') {
-				oldcolconv = "\x1b[0m";
-                                mystring += oldcolconv;
+				            oldcolconv = "\x1b[0m";
+                            mystring += oldcolconv;
   	                        mystring += " ";
                         } else {
                             if (workvar.headers[curnum].fonttype == "cOLOR") {
@@ -635,11 +703,59 @@
             saveAs(blob, 'CODEF_LOGO_MAKER_' + mydate.getTime() + '.txt');
         }
 
-        function init() {
-            mycanvas = new canvas(3200, FONTH * 12);
-            mycanvas.contex.imageSmoothingEnabled = false;
-            LoadTDF("FONTS/1911.TDF");
+        function loadFile(filenames, cb) {
+            
+            if (filenames.length == 0) {
+                cb();
+                return;
+            }
+            var filename = filenames.pop();
+
+            LoadTDF(filename, function () {
+
+                console.log(filenames);
+                loadFile(filenames, cb);
+            });
         }
+
+
+        function init() {
+
+
+            rowContainer = document.getElementById("infos");
+
+            var FONTS = document.getElementById("FONTS");
+
+            var filenames = [];
+        
+            for (i = 0; i < FONTS.options.length; i++) {
+            
+                var filename = FONTS.options[FONTS.options.length -1 - i].value;
+
+                filenames.push(filename);
+            }
+
+                      
+            loadFile(filenames, function () {
+                console.log("loaded all");
+            });
+          
+
+
+
+/* test fonts */
+/*           
+            LoadTDF("FONTS/1911.TDF", function () {
+                console.log("loaded 1911");
+                 
+                LoadTDF("FONTS/208.TDF", function () { 
+                    console.log("loaded 208");
+                });
+            
+            });
+*/
+        }
+            
 
         function fuckUTF8(str) {
             switch (str) {
@@ -1062,7 +1178,7 @@
     <p style="text-align: center;"><img src="IMG/logo.png" /></p>
     <br> yOUR tEXT hERE : <input id="mytext" type="text" value="old school" onInput="text_renderer(curnum);"><br> fONT sPACING :
     <input type="range" id="spacing" min="0" max="5" oninput="curspacing=parseInt(this.value,10);text_renderer(curnum);"><br> "sPACE" sIZE : <input type="range" id="spacesize" value="5" min="0" max="15" oninput="curspacesize=parseInt(this.value,10);text_renderer(curnum);"><br>    tHE fONT :
-    <select name="FONTS" id="FONTS" onChange="LoadTDF(this.value);">
+    <select name="FONTS" id="FONTS" onChange="LoadTDF(this.value, function () {});">
 <?php
 	$files=glob('FONTS/*.TDF', GLOB_BRACE);
 	for ($i = 0; $i < count($files); $i++){
@@ -1071,31 +1187,9 @@
 ?>
 	</select> (Hint : give the focus to this selector then use UP/DOWN keyboard arrow)
 	<br><br>
-	<table>
-		<tr>
-			<td>
-				<div id="infos"></div>
-			</td>
-			<td style="vertical-align: top;text-align:left">
-				<div id="main"></div><br>
-				<div id="createPNGButton">
-					<a id="link"></a>
-				</div>
-				<center>
-					<div id="dl" style="display:none;"><button onclick="dl_img()">Download Image</button></div>
-					<div id="dltxt" style="display:none;"><button onclick="dl_txt()">Download text file (utf8)</button></div>
-					<br>
-					<br>
-					<div>Using the "API" (remote/web) way : <button onclick="copyText('curlink')">Copy</button></div>
-					<div>&nbsp;&nbsp;<curlink id="curlink"></curlink>&nbsp;&nbsp;</div>
-					<br>
-					<div>Using the "API" (local/php/cli) way : <button onclick="copyText('phplink')">Copy</button></div>
-					<div>&nbsp;&nbsp;<phplink id="phplink"></phplink>&nbsp;&nbsp;</div>
-					<br>
-					<br>
-				</center>
-			</td>
-		</tr>
-	</table>
+
+    <div id="infos"></div>
+
+
 	</body>
 </html>
