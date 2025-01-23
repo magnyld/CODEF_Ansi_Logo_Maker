@@ -197,7 +197,6 @@
 
                     for (var i = 0; i < workvar.headers.length; i++) {
 
-                        console.log(workvar.headers);
                         lett = "";
                         aze += "<tr>";
                         aze += "<td><button onclick='text_renderer(" + i + ");'>" + workvar.headers[i].fontname + "</button><" + "/td>";
@@ -415,8 +414,8 @@
             }
             */
 
-            console.log((maxPOSX - 1) * FONTW);
-            console.log((maxPOSY * FONTH));
+            //console.log((maxPOSX - 1) * FONTW);
+            //console.log((maxPOSY * FONTH));
 
 
             var mycanvas = new canvas((maxPOSX - 1) * FONTW, maxPOSY * FONTH);
@@ -560,7 +559,7 @@
 
             var canvas = thisPointer.parentNode.parentNode.parentNode.parentNode.childNodes[1];
 
-            console.log(thisPointer, canvas);
+            //console.log(thisPointer, canvas);
 
             var link = document.getElementById('link');
             var mydate = new Date();
@@ -713,7 +712,6 @@
 
             LoadTDF(filename, function () {
 
-                console.log(filenames);
                 loadFile(filenames, cb);
             });
         }
@@ -1189,7 +1187,7 @@
 	<br><br>
 
     <div id="infos"></div>
-
+    <a id="link" style="display:none;"></a>
 
 	</body>
 </html>
