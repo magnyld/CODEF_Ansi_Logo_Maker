@@ -1153,7 +1153,7 @@
 	</script>
 	</head>
 
-<body onLoad='init();'>
+<body>
     <details>
         <summary>Infos</summary>
         <div>
@@ -1184,6 +1184,9 @@
 	}
 ?>
 	</select> (Hint : give the focus to this selector then use UP/DOWN keyboard arrow)
+    <br>
+    <input type="button" value="Generate fonts" onclick="init();">
+    <br>
 	<br><br>
 
     <div id="infos"></div>
